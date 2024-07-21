@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
-import exercises from './exercises'; // Assuming exercises data is imported from './exercises.js'
+import exercisesData from './exercises'; // Assuming exercises data is imported from './exercises.js'
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import motivationalQuotes from './motivationalQuotes'; // Import motivational quotes
 import './App.css'; // Custom CSS for styling
 
-// Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend);
 
 const App = () => {
@@ -19,10 +18,6 @@ const App = () => {
     return savedHistory ? JSON.parse(savedHistory) : [];
   });
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [tooltipIndex, setTooltipIndex] = useState(null);
-  const [compareResults, setCompareResults] = useState(null);
-  const [trainingWeeks, setTrainingWeeks] = useState(4);
-  const [chartData, setChartData] = useState(null); // State for chart data
 
   // Effect to store workout history in local storage
   useEffect(() => {
@@ -31,38 +26,46 @@ const App = () => {
 
   // Function to generate random workout
   const generateRandomWorkout = (level) => {
-    const filteredExercises = exercises.filter(exercise => exercise.difficulty === level);
+    const filteredExercises = exercisesData.filter(exercise => exercise.difficulty === level);
     const workoutCount = Math.min(4, filteredExercises.length);
-    return Array.from({ length: workoutCount }, (_, index) => {
-      const randomExercise = filteredExercises[index]; // Accessing directly by index
-      return {
-        ...randomExercise,
-        sets: Math.floor(Math.random() * 3) + 2,
-        reps: Math.floor(Math.random() * 10) + 5,
-        day: null // Day will be set when rendering workout list
-      };
-    });
-  };
-  
+    const selectedExercises = [];
+    const selectedIndexes = [];
 
-  // Function to handle workout generation
-  const handleGenerateWorkout = () => {
-    const newWorkout = generateRandomWorkout(difficulty).map((exercise, index) => ({
+    while (selectedExercises.length < workoutCount) {
+      const randomIndex = Math.floor(Math.random() * filteredExercises.length);
+      if (!selectedIndexes.includes(randomIndex)) {
+        selectedIndexes.push(randomIndex);
+        selectedExercises.push({
+          ...filteredExercises[randomIndex],
+          sets: Math.floor(Math.random() * 3) + 2,
+          reps: Math.floor(Math.random() * 10) + 5
+        });
+      }
+    }
+
+    return selectedExercises.map((exercise, index) => ({
       ...exercise,
       day: index + 1, // Add day number starting from 1
     }));
+  };
+
+  // Function to handle workout generation
+  const handleGenerateWorkout = () => {
+    const newWorkout = generateRandomWorkout(difficulty);
     setWorkout(newWorkout);
   };
 
   // Function to handle workout download
   const handleDownloadWorkout = () => {
-    const motivationalQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-    let workoutPlan = `🏋️‍♂️ Your Workout Plan 🏋️‍♀️\n\n`;
-    workout.forEach((exercise) => {
-      workoutPlan += exercise.restDay ? formatRestDay(exercise) : formatExercise(exercise);
-    });
-    workoutPlan += formatMotivationalQuote(motivationalQuote);
-    downloadFile(workoutPlan);
+    if (workout.length > 0) {
+      const motivationalQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+      let workoutPlan = `🏋️‍♂️ Your Workout Plan 🏋️‍♀️\n\n`;
+      workout.forEach((exercise) => {
+        workoutPlan += exercise.restDay ? formatRestDay(exercise) : formatExercise(exercise);
+      });
+      workoutPlan += formatMotivationalQuote(motivationalQuote);
+      downloadFile(workoutPlan);
+    }
   };
 
   // Function to format rest day
@@ -105,29 +108,13 @@ const App = () => {
     }
   };
 
-  // Function to render tooltip content
-  const renderTooltipContent = (exercise, index) => {
-    return (
-      <div className="absolute z-10 p-2 bg-gray-800 text-white text-sm rounded shadow-lg">
-        <p>{exercise.description}</p>
-        <p className="mt-2 font-bold">Tips: {exercise.tips}</p>
-      </div>
-    );
-  };
-
   // Function to render workout list
   const renderWorkoutList = (workoutItems) => {
     return (
       <ul className="list-disc pl-5 space-y-2">
         {workoutItems.map((exercise, index) => (
-          <li 
-            key={index} 
-            className="text-gray-700 relative"
-            onMouseEnter={() => setTooltipIndex(index)}
-            onMouseLeave={() => setTooltipIndex(null)}
-          >
+          <li key={index} className="text-gray-700">
             Day {exercise.day}: {exercise.name} ({exercise.muscle}): {exercise.sets} sets of {exercise.reps} reps
-            {tooltipIndex === index && renderTooltipContent(exercise, index)}
           </li>
         ))}
       </ul>
@@ -227,13 +214,6 @@ const App = () => {
                 </li>
               ))}
             </ul>
-          </div>
-        )}
-
-        {compareResults && (
-          <div className="mt-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Compare Results:</h2>
-            {/* Display comparison results */}
           </div>
         )}
       </div>
