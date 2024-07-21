@@ -12,6 +12,14 @@ const motivationalQuotes = [
     "Life is not about waiting for the storm to pass but learning to dance in the rain. – Vivian Greene",
     "Believe you can and you’re halfway there. – Theodore Roosevelt",
     "Success is not final, failure is not fatal: It is the courage to continue that counts. – Winston Churchill",
+    "Dream big. Start small. Act now. – Robin Sharma",
+    "Challenges are what make life interesting and overcoming them is what makes life meaningful. – Joshua J. Marine",
+    "The only person you are destined to become is the person you decide to be. – Ralph Waldo Emerson",
+    "The difference between ordinary and extraordinary is that little extra. – Jimmy Johnson",
+    "Don’t watch the clock; do what it does. Keep going. – Sam Levenson",
+    "Believe in yourself. You are braver than you think, more talented than you know, and capable of more than you imagine. – Roy T. Bennett",
+    "Your positive action combined with positive thinking results in success. – Shiv Khera",
+    "Strength does not come from physical capacity. It comes from an indomitable will. – Mahatma Gandhi",
   ];
   
   export default motivationalQuotes;

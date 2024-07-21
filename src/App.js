@@ -7,62 +7,89 @@ import 'react-calendar/dist/Calendar.css';
 import motivationalQuotes from './motivationalQuotes'; // Import motivational quotes
 import './App.css'; // Custom CSS for styling
 
+// Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend);
 
-const generateRandomWorkout = (level) => {
-  const filteredExercises = exercises.filter(exercise => exercise.difficulty === level);
-  const workoutCount = Math.min(4, filteredExercises.length);
-  return Array.from({ length: workoutCount }, () => {
-    const randomExercise = filteredExercises[Math.floor(Math.random() * filteredExercises.length)];
-    return {
-      ...randomExercise,
-      sets: Math.floor(Math.random() * 3) + 2,
-      reps: Math.floor(Math.random() * 10) + 5
-    };
-  });
-};
-
-const calculatePotentialGains = (workout, weeks) => {
-  const totalVolume = workout.reduce((sum, ex) => sum + ex.sets * ex.reps, 0);
-  const estimatedStrengthGain = Math.round(totalVolume * 0.05 * weeks);
-  const estimatedCaloriesBurned = workout.reduce((sum, ex) => sum + ex.caloriesBurned * ex.sets, 0) * weeks;
-  
-  return {
-    strengthGain: estimatedStrengthGain,
-    caloriesBurned: estimatedCaloriesBurned
-  };
-};
-
 const App = () => {
+  // State variables
   const [difficulty, setDifficulty] = useState('Beginner');
   const [workout, setWorkout] = useState([]);
   const [workoutHistory, setWorkoutHistory] = useState(() => {
     const savedHistory = localStorage.getItem('workoutHistory');
     return savedHistory ? JSON.parse(savedHistory) : [];
   });
-  const [trainingWeeks, setTrainingWeeks] = useState(4);
-  const [tooltipIndex, setTooltipIndex] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [tooltipIndex, setTooltipIndex] = useState(null);
   const [compareResults, setCompareResults] = useState(null);
+  const [trainingWeeks, setTrainingWeeks] = useState(4);
+  const [chartData, setChartData] = useState(null); // State for chart data
 
+  // Effect to store workout history in local storage
   useEffect(() => {
     localStorage.setItem('workoutHistory', JSON.stringify(workoutHistory));
   }, [workoutHistory]);
 
+  // Function to generate random workout
+  const generateRandomWorkout = (level) => {
+    const filteredExercises = exercises.filter(exercise => exercise.difficulty === level);
+    const workoutCount = Math.min(4, filteredExercises.length);
+    return Array.from({ length: workoutCount }, (_, index) => {
+      const randomExercise = filteredExercises[index]; // Accessing directly by index
+      return {
+        ...randomExercise,
+        sets: Math.floor(Math.random() * 3) + 2,
+        reps: Math.floor(Math.random() * 10) + 5,
+        day: null // Day will be set when rendering workout list
+      };
+    });
+  };
+  
+
+  // Function to handle workout generation
   const handleGenerateWorkout = () => {
-    setWorkout(generateRandomWorkout(difficulty));
+    const newWorkout = generateRandomWorkout(difficulty).map((exercise, index) => ({
+      ...exercise,
+      day: index + 1, // Add day number starting from 1
+    }));
+    setWorkout(newWorkout);
   };
 
+  // Function to handle workout download
   const handleDownloadWorkout = () => {
-    const workoutText = workout.map((exercise, index) => (
-      `${index + 1}. ${exercise.name} (${exercise.muscle}): ${exercise.sets} sets of ${exercise.reps} reps\nDescription: ${exercise.description}\nTips: ${exercise.tips}\n\n`
-    )).join('');
-    
     const motivationalQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-    const workoutPlan = `Your Workout Plan\n\n${workoutText}\n\nMotivational Quote:\n"${motivationalQuote}"`;
+    let workoutPlan = `🏋️‍♂️ Your Workout Plan 🏋️‍♀️\n\n`;
+    workout.forEach((exercise) => {
+      workoutPlan += exercise.restDay ? formatRestDay(exercise) : formatExercise(exercise);
+    });
+    workoutPlan += formatMotivationalQuote(motivationalQuote);
+    downloadFile(workoutPlan);
+  };
 
+  // Function to format rest day
+  const formatRestDay = (exercise) => {
+    return `🌟 Day ${exercise.day}: Rest Day 🌟\n` +
+           `Description: ${exercise.description}\n` +
+           `Tips: ${exercise.tips}\n\n`;
+  };
+
+  // Function to format exercise
+  const formatExercise = (exercise) => {
+    return `💪 Day ${exercise.day}: ${exercise.name} (${exercise.muscle}) 💪\n` +
+           `Sets: ${exercise.sets}\n` +
+           `Reps: ${exercise.reps}\n` +
+           `Description: ${exercise.description}\n` +
+           `Tips: ${exercise.tips}\n\n`;
+  };
+
+  // Function to format motivational quote
+  const formatMotivationalQuote = (quote) => {
+    return `🌟 "${quote}" 🌟\n\n`;
+  };
+
+  // Function to download workout plan
+  const downloadFile = (content) => {
     const element = document.createElement('a');
-    const file = new Blob([workoutPlan], { type: 'text/plain' });
+    const file = new Blob([content], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = 'workout_plan.txt';
     document.body.appendChild(element);
@@ -70,6 +97,7 @@ const App = () => {
     document.body.removeChild(element);
   };
 
+  // Function to handle workout logging
   const handleLogWorkout = () => {
     if (workout.length > 0) {
       setWorkoutHistory(prev => [...prev, { date: selectedDate.toISOString().split('T')[0], workout }]);
@@ -77,6 +105,7 @@ const App = () => {
     }
   };
 
+  // Function to render tooltip content
   const renderTooltipContent = (exercise, index) => {
     return (
       <div className="absolute z-10 p-2 bg-gray-800 text-white text-sm rounded shadow-lg">
@@ -86,6 +115,7 @@ const App = () => {
     );
   };
 
+  // Function to render workout list
   const renderWorkoutList = (workoutItems) => {
     return (
       <ul className="list-disc pl-5 space-y-2">
@@ -96,7 +126,7 @@ const App = () => {
             onMouseEnter={() => setTooltipIndex(index)}
             onMouseLeave={() => setTooltipIndex(null)}
           >
-            {exercise.name} ({exercise.muscle}): {exercise.sets} sets of {exercise.reps} reps
+            Day {exercise.day}: {exercise.name} ({exercise.muscle}): {exercise.sets} sets of {exercise.reps} reps
             {tooltipIndex === index && renderTooltipContent(exercise, index)}
           </li>
         ))}
@@ -104,6 +134,7 @@ const App = () => {
     );
   };
 
+  // Function to get progress data for chart
   const getProgressData = () => {
     const dates = workoutHistory.map(entry => entry.date);
     const totalSets = workoutHistory.map(entry => entry.workout.reduce((sum, ex) => sum + ex.sets, 0));
@@ -135,10 +166,12 @@ const App = () => {
     };
   };
 
+  // Function to handle calendar date change
   const handleCalendarChange = (date) => {
     setSelectedDate(date);
   };
 
+  // Render JSX
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-4">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg mb-6 border border-gray-200">
@@ -224,4 +257,3 @@ const App = () => {
 };
 
 export default App;
-
