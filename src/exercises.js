@@ -199,7 +199,6 @@ const exercises = [
     difficulty: 'Advanced',
     caloriesBurned: 10 // Estimated calories burned per set
   },
-  // Add more exercises here...
 ];
 
 export default exercises;
