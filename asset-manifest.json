@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/Workout-Progress/static/css/main.fe595345.css",
+    "main.js": "/Workout-Progress/static/js/main.76dfffd0.js",
+    "static/js/453.f2713db3.chunk.js": "/Workout-Progress/static/js/453.f2713db3.chunk.js",
+    "index.html": "/Workout-Progress/index.html",
+    "main.fe595345.css.map": "/Workout-Progress/static/css/main.fe595345.css.map",
+    "main.76dfffd0.js.map": "/Workout-Progress/static/js/main.76dfffd0.js.map",
+    "453.f2713db3.chunk.js.map": "/Workout-Progress/static/js/453.f2713db3.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.fe595345.css",
+    "static/js/main.76dfffd0.js"
+  ]
+}
